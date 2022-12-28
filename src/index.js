@@ -11,18 +11,70 @@ const users = [];
 
 function checksExistsUserAccount(request, response, next) {
   // Complete aqui
+  const { username } = request.headers
+
+  const existsAccountWithUsername = users.find((user) => user.username === username)
+  if (!existsAccountWithUsername) {
+    return response.status(404).json({ error: 'User with username not found'})
+  }
+
+  request.user = existsAccountWithUsername
+
+  return next()
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
   // Complete aqui
+  const { user } = request
+
+  if (!user.pro) {
+    if (user.todos.length < 10) {
+      return next()
+    } else {
+      return response.status(403).json({ error: 'User is not a Pro' })
+    }
+  }
+
+  return next()
 }
 
 function checksTodoExists(request, response, next) {
   // Complete aqui
+  const { username } = request.headers
+  const { id } = request.params
+  const user = users.find(user => user.username === username)
+
+  if (!validate(id)) {
+    return response.status(400).json({ error: 'To do Id is not an uuid'})
+  }
+
+  if (!user) {
+    return response.status(404).json({ error: 'User not found'})
+  }
+
+  const todo = user.todos.find(todo => todo.id === id)
+
+  if (!todo) {
+    return response.status(404).json({ error: 'To do not found'})
+  }
+
+  request.todo = todo
+  request.user = user
+  return next()
 }
 
 function findUserById(request, response, next) {
   // Complete aqui
+  const { id } = request.params;
+
+  const userFound = users.find((user) => user.id === id)
+
+  if (!userFound) {
+    return response.status(404).json({ error: 'User not found'})
+  }
+
+  request.user = userFound
+  return next()
 }
 
 app.post('/users', (request, response) => {
